@@ -33,10 +33,18 @@ use types::{Err, GetObjectResp, ListObjectsResp, Region};
 use crate::minio::net::{Values, ValuesAccess};
 
 mod api;
-mod api_notification;
+mod compose_object;
+mod constants;
+mod encrypt;
+mod error_response;
+mod get_options;
 mod net;
+mod notification;
+mod s3_error;
 mod sign;
+mod stat;
 mod types;
+mod utils;
 mod xml;
 
 mod woxml;

@@ -24,6 +24,7 @@ use hyper::header::{
 use hyper::{body::Body, Response};
 use roxmltree;
 use std::collections::HashMap;
+use std::error::Error;
 use std::string;
 use time::{strptime, Tm};
 
@@ -143,33 +144,56 @@ impl BucketInfo {
     }
 }
 
+struct Owner {
+    pub display_name: String,
+    pub id: String,
+}
+
+// ObjectInfo container for object metadata.
 #[derive(Debug)]
 pub struct ObjectInfo {
-    pub name: String,
-    pub modified_time: Tm,
+    // An ETag is optionally set to md5sum of an object.  In case of multipart objects,
+    // ETag is of the form MD5SUM-N where MD5SUM is md5sum of all individual md5sums of
+    // each parts concatenated into one string.
     pub etag: String,
+
+    pub key: String,
     pub size: i64,
+    pub last_modified: Tm,
+    pub content_type: Option<String>,
+    pub expires: Option<Tm>,
+
+    // Owner name.
+    pub owner: Option<Owner>,
+
+    // The class of storage used to store the object.
     pub storage_class: String,
+
+    // Collection of additional metadata on the object.
+    // eg: x-amz-meta-*, content-encoding etc.
     pub metadata: HashMap<String, String>,
+
+    pub error: Option<Error>,
 }
 
 impl ObjectInfo {
     pub fn new(
-        name: &str,
-        mtime_str: &str,
+        key: &str,
+        last_modified_str: &str,
         etag: &str,
         size: i64,
         storage_class: &str,
         metadata: HashMap<String, String>,
     ) -> Result<ObjectInfo, Err> {
-        parse_aws_time(mtime_str).and_then(|mtime| {
+        parse_aws_time(last_modified_str).and_then(|mtime| {
             Ok(ObjectInfo {
-                name: name.to_string(),
-                modified_time: mtime,
+                key: key.to_string(),
+                last_modified: mtime,
                 etag: etag.to_string(),
                 size: size,
                 storage_class: storage_class.to_string(),
                 metadata: metadata,
+                ..Default::default()
             })
         })
     }
